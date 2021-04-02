@@ -1,22 +1,11 @@
-# stage1 as builder
+# stage1
 FROM node:15.13.0-alpine3.10 as builder
-# copy the package.json to install dependencies
-COPY package.json package-lock.json ./
-# Install the dependencies and make the folder
-RUN npm install && mkdir /reactapp && mv ./node_modules ./reactapp
 WORKDIR /reactapp
-COPY . .
-# Build the project and copy the files
+COPY package.json /reactapp
+RUN npm install
+COPY . /reactapp
 RUN npm run build
 
-FROM nginx:alpine
-
-#!/bin/sh
-
-COPY ./.nginx/nginx.conf /etc/nginx/nginx.conf
-## Remove default nginx index page
-RUN rm -rf /usr/share/nginx/html/*
-# Copy from the stahg 1
+#stage2
+FROM nginx:1.19.9-alpine
 COPY --from=builder /reactapp/build /usr/share/nginx/html
-EXPOSE 3000 80
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
